@@ -1,5 +1,5 @@
 import io from 'socket.io-client';
-const connection_port='localhost:8000';
+const connection_port='https://setver.onrender.com/';
 
 let socket;
 
