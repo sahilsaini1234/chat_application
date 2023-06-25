@@ -2,6 +2,7 @@ import { useEffect,useState} from 'react';
 import React from 'react';
 import socket from './io'
 import './Chat_app.css'
+const CryptoJS = require('crypto-js');
 export default function Chat_app() {
     const [Fields,setinputs]=useState({
         name:"",
@@ -10,16 +11,29 @@ export default function Chat_app() {
     })
     const[messagelist,setmessagelist]=useState([])
     const [inchat,setchat] = useState(false)
+
+    const encryptWithAES = (text) => {
+      return CryptoJS.AES.encrypt(text,Fields.room).toString();
+    };
+
+    const decryptWithAES = (ciphertext) => {
+      const bytes = CryptoJS.AES.decrypt(ciphertext,Fields.room);
+      const originalText = bytes.toString(CryptoJS.enc.Utf8);
+      return originalText;
+    };
     useEffect(()=>{
         socket.on('recieve',(data)=>{
+            
             setmessagelist([...messagelist,data])
         })
     })
     const handler=(e)=>{
+          if(e.target.name!=='room'){
           setinputs({
             ...Fields,
-            [e.target.name]:e.target.value,
+            [e.target.name]:encryptWithAES(e.target.value),
           })
+        }
     }
     const enter_room=()=>{
         //console.log(Fields)
@@ -31,7 +45,7 @@ export default function Chat_app() {
         await socket.emit("send_message",Fields)
         setmessagelist([...messagelist,Fields])
     }
-    console.log(Fields)
+    
     return (
         <div className="container">
             <div className="left">
@@ -54,7 +68,7 @@ export default function Chat_app() {
                  {
                     messagelist.map((item,index)=>{
                         return (<div style={{margin:'15px'}} key={index}>
-                            {item.name}:<span class="messages">{item.message}</span>
+                            {decryptWithAES(item.name)}:<span class="messages">{decryptWithAES(item.message)}</span>
                         </div>);
                     })
                  }
